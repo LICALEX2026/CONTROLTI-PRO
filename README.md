@@ -10,4 +10,4 @@ Sistema avanzado de inventario para empresas que administran equipos de computo,
 - Alertas por stock bajo
 - Busqueda y filtros por estado, tipo y categoria
 - Exportacion a Excel
-- Persistencia local en el navegador con `localStorage`
+- Guardado local de datos en el navegador
