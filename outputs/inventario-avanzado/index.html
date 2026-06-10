@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ControlTI Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-grid"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">IA</div>
+        <div>
+          <h1>ControlTI Pro</h1>
+          <p>Control de equipos y consumibles</p>
+        </div>
+      </div>
+
+      <section class="panel panel-accent">
+        <h2>Vista general</h2>
+        <div class="mini-stat">
+          <span>Registros</span>
+          <strong id="totalRecords">0</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Unidades físicas</span>
+          <strong id="totalUnits">0</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Bajo stock</span>
+          <strong id="lowStockCount">0</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Asignados</span>
+          <strong id="assignedCount">0</strong>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Accesos rápidos</h2>
+        <button class="ghost-btn" id="newItemBtn">Nuevo registro</button>
+        <button class="ghost-btn" id="newMovementBtn">Registrar movimiento</button>
+        <button class="ghost-btn" id="exportJsonBtn">Exportar JSON</button>
+        <button class="ghost-btn" id="exportCsvBtn">Exportar CSV</button>
+        <button class="ghost-btn" id="importJsonBtn">Importar JSON</button>
+        <input type="file" id="importFile" accept="application/json" hidden />
+      </section>
+
+      <section class="panel">
+        <h2>Consejos de uso</h2>
+        <ul class="tips">
+          <li>Usa <strong>Activo</strong> para laptops, CPU, pantallas y todo lo serializado.</li>
+          <li>Usa <strong>Consumible</strong> para cables, adaptadores, teclados y mouse por lote.</li>
+          <li>Los movimientos dejan trazabilidad completa en el historial.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Sistema empresarial</p>
+          <h2>Control centralizado de inventario para equipos de cómputo</h2>
+          <p class="hero-copy">
+            Gestiona laptops, CPU, teclados, mouse, cables HDMI/VGA, adaptadores, pantallas, todo en uno y cualquier
+            componente de TI con trazabilidad, alertas y movimientos.
+          </p>
+        </div>
+        <div class="hero-card">
+          <span>Estado actual</span>
+          <strong id="statusSummary">Cargando...</strong>
+          <small id="lastSync">Sincronizado localmente</small>
+        </div>
+      </header>
+
+      <section class="stats-grid" id="statsGrid"></section>
+
+      <section class="toolbar panel">
+        <div class="search-wrap">
+          <label for="searchInput">Buscar</label>
+          <input id="searchInput" type="search" placeholder="Código, nombre, serial, marca, usuario..." />
+        </div>
+        <div class="filters">
+          <label>
+            Estado
+            <select id="statusFilter"></select>
+          </label>
+          <label>
+            Tipo
+            <select id="typeFilter"></select>
+          </label>
+          <label>
+            Categoría
+            <select id="categoryFilter"></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <article class="panel table-panel">
+          <div class="section-head">
+            <div>
+              <h3>Inventario</h3>
+              <p>Registros activos, consumibles y equipos asignados</p>
+            </div>
+            <div class="section-actions">
+              <button class="secondary-btn" id="resetFiltersBtn">Limpiar filtros</button>
+              <button class="primary-btn" id="seedBtn">Recargar muestra</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Activo / insumo</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th>Cant.</th>
+                  <th>Mín.</th>
+                  <th>Ubicación</th>
+                  <th>Asignado a</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <aside class="side-stack">
+          <article class="panel">
+            <div class="section-head compact">
+              <div>
+                <h3>Alertas</h3>
+                <p>Stock bajo y equipos con atención pendiente</p>
+              </div>
+            </div>
+            <div id="alertsList" class="card-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="section-head compact">
+              <div>
+                <h3>Distribución por categoría</h3>
+                <p>Resumen rápido de unidades en inventario</p>
+              </div>
+            </div>
+            <div id="categoryChart" class="chart-list"></div>
+          </article>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h3>Movimientos recientes</h3>
+            <p>Entradas, salidas, ajustes, asignaciones y devoluciones</p>
+          </div>
+        </div>
+        <div id="movementList" class="timeline"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="itemModal">
+    <div class="modal-card">
+      <div class="section-head">
+        <div>
+          <h3 id="itemModalTitle">Nuevo registro</h3>
+          <p>Alta o edición de inventario</p>
+        </div>
+        <button class="icon-btn" data-close="itemModal" aria-label="Cerrar">×</button>
+      </div>
+      <form id="itemForm" class="form-grid">
+        <input type="hidden" id="itemId" />
+        <label>Código
+          <input id="itemCode" required placeholder="IT-0001" />
+        </label>
+        <label>Nombre
+          <input id="itemName" required placeholder="Laptop Dell, Cable HDMI..." />
+        </label>
+        <label>Tipo
+          <select id="itemType" required>
+            <option value="Activo">Activo</option>
+            <option value="Consumible">Consumible</option>
+          </select>
+        </label>
+        <label>Categoría
+          <input id="itemCategory" list="categorySuggestions" required placeholder="Laptop, CPU, adaptador..." />
+          <datalist id="categorySuggestions">
+            <option value="Laptop"></option>
+            <option value="CPU"></option>
+            <option value="Teclado"></option>
+            <option value="Mouse"></option>
+            <option value="Cable HDMI"></option>
+            <option value="Cable VGA"></option>
+            <option value="Adaptador"></option>
+            <option value="Pantalla"></option>
+            <option value="Todo en uno"></option>
+            <option value="Accesorio"></option>
+          </datalist>
+        </label>
+        <label>Marca
+          <input id="itemBrand" placeholder="Dell, Lenovo, HP..." />
+        </label>
+        <label>Modelo
+          <input id="itemModel" placeholder="Latitude 5420..." />
+        </label>
+        <label>Serial
+          <input id="itemSerial" placeholder="Solo para activos" />
+        </label>
+        <label>Cantidad
+          <input id="itemQuantity" type="number" min="1" value="1" required />
+        </label>
+        <label>Mínimo de alerta
+          <input id="itemMinStock" type="number" min="0" value="1" required />
+        </label>
+        <label>Ubicación
+          <input id="itemLocation" list="locationSuggestions" placeholder="Almacén TI, piso 2..." />
+          <datalist id="locationSuggestions">
+            <option value="Almacén TI"></option>
+            <option value="Recepción"></option>
+            <option value="Mesa de soporte"></option>
+            <option value="Sucursal Norte"></option>
+            <option value="Sucursal Sur"></option>
+          </datalist>
+        </label>
+        <label>Asignado a
+          <input id="itemAssignedTo" placeholder="Nombre, área o responsable" />
+        </label>
+        <label>Estado
+          <select id="itemStatus">
+            <option value="Disponible">Disponible</option>
+            <option value="Asignado">Asignado</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+            <option value="Baja">Baja</option>
+            <option value="Agotado">Agotado</option>
+          </select>
+        </label>
+        <label class="full-width">Observaciones
+          <textarea id="itemNotes" rows="4" placeholder="Garantía, condición, accesorios incluidos..."></textarea>
+        </label>
+        <div class="form-actions full-width">
+          <button type="button" class="secondary-btn" data-close="itemModal">Cancelar</button>
+          <button type="submit" class="primary-btn">Guardar registro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="movementModal">
+    <div class="modal-card">
+      <div class="section-head">
+        <div>
+          <h3>Registrar movimiento</h3>
+          <p>Control de entradas, salidas, asignaciones y devoluciones</p>
+        </div>
+        <button class="icon-btn" data-close="movementModal" aria-label="Cerrar">×</button>
+      </div>
+      <form id="movementForm" class="form-grid">
+        <input type="hidden" id="movementItemId" />
+        <label>Registro
+          <input id="movementItemName" disabled />
+        </label>
+        <label>Movimiento
+          <select id="movementType" required>
+            <option value="Entrada">Entrada</option>
+            <option value="Salida">Salida</option>
+            <option value="Ajuste">Ajuste</option>
+            <option value="Asignación">Asignación</option>
+            <option value="Devolución">Devolución</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </label>
+        <label>Cantidad
+          <input id="movementQuantity" type="number" min="1" value="1" required />
+        </label>
+        <label>Responsable
+          <input id="movementResponsible" placeholder="Usuario, área o responsable" />
+        </label>
+        <label>Destino / ubicación
+          <input id="movementDestination" placeholder="Sucursal, oficina, almacén..." />
+        </label>
+        <label class="full-width">Notas
+          <textarea id="movementNotes" rows="4" placeholder="Observaciones del movimiento"></textarea>
+        </label>
+        <div class="form-actions full-width">
+          <button type="button" class="secondary-btn" data-close="movementModal">Cancelar</button>
+          <button type="submit" class="primary-btn">Registrar movimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
