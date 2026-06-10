@@ -182,7 +182,6 @@ const els = {
   movementResponsible: document.getElementById("movementResponsible"),
   movementDestination: document.getElementById("movementDestination"),
   movementNotes: document.getElementById("movementNotes"),
-  importFile: document.getElementById("importFile"),
 };
 
 init();
@@ -273,9 +272,7 @@ function bindEvents() {
 
   document.getElementById("newItemBtn").addEventListener("click", () => openItemModal());
   document.getElementById("newMovementBtn").addEventListener("click", () => openMovementModal());
-  document.getElementById("exportJsonBtn").addEventListener("click", exportJson);
-  document.getElementById("exportCsvBtn").addEventListener("click", exportCsv);
-  document.getElementById("importJsonBtn").addEventListener("click", () => els.importFile.click());
+  document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
   document.getElementById("resetFiltersBtn").addEventListener("click", resetFilters);
   document.getElementById("seedBtn").addEventListener("click", resetToSeed);
 
@@ -287,8 +284,6 @@ function bindEvents() {
 
   els.itemForm.addEventListener("submit", saveItem);
   els.movementForm.addEventListener("submit", saveMovement);
-
-  els.importFile.addEventListener("change", handleImportFile);
 
   [els.itemModal, els.movementModal].forEach((modal) => {
     modal.addEventListener("click", (event) => {
@@ -860,6 +855,115 @@ function exportCsv() {
   showToast("CSV exportado.");
 }
 
+function exportExcel() {
+  const timestamp = formatDateTime(new Date().toISOString());
+  const totalUnits = state.items.reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0);
+  const lowStock = state.items.filter((item) => isLowStock(item)).length;
+  const assigned = state.items.filter((item) => item.status === "Asignado").length;
+
+  const inventoryRows = state.items
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.code)}</td>
+          <td>${escapeHtml(item.name)}</td>
+          <td>${escapeHtml(item.type)}</td>
+          <td>${escapeHtml(item.category)}</td>
+          <td>${escapeHtml(item.brand)}</td>
+          <td>${escapeHtml(item.model)}</td>
+          <td>${escapeHtml(item.serial || "")}</td>
+          <td>${Number(item.quantity) || 0}</td>
+          <td>${item.minStock}</td>
+          <td>${escapeHtml(item.location || "")}</td>
+          <td>${escapeHtml(item.assignedTo || "")}</td>
+          <td>${escapeHtml(item.status)}</td>
+          <td>${escapeHtml(item.notes || "")}</td>
+          <td>${escapeHtml(formatDateTime(item.updatedAt || new Date().toISOString()))}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const movementRows = [...state.movements]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .map(
+      (movement) => `
+        <tr>
+          <td>${escapeHtml(formatDateTime(movement.date))}</td>
+          <td>${escapeHtml(movement.itemName)}</td>
+          <td>${escapeHtml(movement.type)}</td>
+          <td>${movement.quantity}</td>
+          <td>${escapeHtml(movement.responsible || "")}</td>
+          <td>${escapeHtml(movement.destination || "")}</td>
+          <td>${escapeHtml(movement.notes || "")}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const workbook = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        body { font-family: Arial, sans-serif; color: #111827; }
+        h1, h2, p { margin: 0 0 10px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 12px; vertical-align: top; }
+        th { background: #0f172a; color: #fff; }
+      </style>
+    </head>
+    <body>
+      <h1>ControlTI Pro</h1>
+      <p>Reporte generado: ${escapeHtml(timestamp)}</p>
+      <p>Registros: ${state.items.length} | Unidades: ${totalUnits} | Bajo stock: ${lowStock} | Asignados: ${assigned}</p>
+      <h2>Inventario actual</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Categoría</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Serial</th>
+            <th>Cantidad</th>
+            <th>Mínimo</th>
+            <th>Ubicación</th>
+            <th>Asignado a</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+            <th>Actualizado</th>
+          </tr>
+        </thead>
+        <tbody>${inventoryRows}</tbody>
+      </table>
+      <h2>Movimientos recientes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Registro</th>
+            <th>Movimiento</th>
+            <th>Cantidad</th>
+            <th>Responsable</th>
+            <th>Destino</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>${movementRows}</tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  downloadFile(workbook, `ControlTI-Pro-${formatFileStamp(new Date().toISOString())}.xls`, "application/vnd.ms-excel");
+  showToast("Excel descargado con el estado actual.");
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
@@ -939,4 +1043,10 @@ function formatDateTime(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function formatFileStamp(value) {
+  const date = new Date(value);
+  const pad = (num) => String(num).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
