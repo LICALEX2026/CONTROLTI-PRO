@@ -12,9 +12,3 @@ Sistema avanzado de inventario para empresas que administran equipos de computo,
 - Exportacion a JSON y CSV
 - Importacion de respaldos JSON
 - Persistencia local en el navegador con `localStorage`
-
-## Como usarlo localmente
-
-1. Abre `index.html` en un navegador moderno.
-2. Entra al sistema desde la portada.
-3. Usa el panel para crear inventario y registrar movimientos.
