@@ -9,6 +9,5 @@ Sistema avanzado de inventario para empresas que administran equipos de computo,
 - Movimientos de entrada, salida, ajuste, asignacion, devolucion, mantenimiento y baja
 - Alertas por stock bajo
 - Busqueda y filtros por estado, tipo y categoria
-- Exportacion a JSON y CSV
-- Importacion de respaldos JSON
+- Exportacion a Excel
 - Persistencia local en el navegador con `localStorage`
